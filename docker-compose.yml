@@ -1,0 +1,23 @@
+services:
+  nginx-proxy:
+    image: nginx:latest
+    container_name: local-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./conf:/etc/nginx/conf.d:ro
+      - ./generate_index.sh:/generate_index.sh:ro
+      - ./start-nginx-with-refresh.sh:/start-nginx-with-refresh.sh:ro
+    command: ["/bin/sh", "/start-nginx-with-refresh.sh"]
+    environment:
+      - REFRESH_SECONDS=21600
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t >/dev/null 2>&1 && [ -f /var/run/nginx.pid ] && kill -0 $$(cat /var/run/nginx.pid)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
